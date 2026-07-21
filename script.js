@@ -28,6 +28,11 @@ const btnReset = document.getElementById('btn-reset');
 const btnExport = document.getElementById('btn-export');
 const toast = document.getElementById('toast');
 const statusBadge = document.getElementById('status-badge');
+const loginModal = document.getElementById('login-modal');
+const loginForm = document.getElementById('login-form');
+const loginUsername = document.getElementById('login-username');
+const loginPassword = document.getElementById('login-password');
+const loginError = document.getElementById('login-error');
 
 let nombresData = {};
 
@@ -132,6 +137,43 @@ countFilledEl.textContent = cantidadVendida;
 countEmptyEl.textContent = 50 - cantidadVendida;
 }
 
+const loginCredentials = {
+    username: 'juan',
+    password: 'velasquez'
+};
+
+function showLoginModal() {
+    loginModal.classList.remove('hidden');
+    document.body.classList.add('locked');
+    loginError.textContent = '';
+    loginUsername.value = '';
+    loginPassword.value = '';
+    loginUsername.focus();
+}
+
+function hideLoginModal() {
+    loginModal.classList.add('hidden');
+    document.body.classList.remove('locked');
+}
+
+function validarCredenciales(usuario, contrasena) {
+    return usuario === loginCredentials.username && contrasena === loginCredentials.password;
+}
+
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const usuario = loginUsername.value.trim();
+    const contrasena = loginPassword.value;
+
+    if (validarCredenciales(usuario, contrasena)) {
+        hideLoginModal();
+    } else {
+        loginError.textContent = 'Usuario o contraseña incorrectos. Intenta de nuevo.';
+        loginPassword.value = '';
+        loginPassword.focus();
+    }
+});
+
 let timeoutToast;
 function mostrarToast(mensaje) {
 toast.textContent = mensaje;
@@ -168,3 +210,4 @@ link.click();
 });
 
 initGrid();
+showLoginModal();
