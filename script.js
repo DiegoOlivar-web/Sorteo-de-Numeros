@@ -34,70 +34,86 @@ const loginUsername = document.getElementById('login-username');
 const loginPassword = document.getElementById('login-password');
 const loginError = document.getElementById('login-error');
 
+const inputs = new Array(51);
+const cards = new Array(51);
 let nombresData = {};
+let lastImageVal = null;
 
 function initGrid() {
-gridContainer.innerHTML = '';
-for (let i = 1; i <= 50; i++) {
-    const numFormatted = String(i).padStart(2, '0');
+    gridContainer.innerHTML = '';
 
-    const card = document.createElement('div');
-    card.className = 'number-card';
-    card.id = `card-${i}`;
+    const fragment = document.createDocumentFragment();
+    for (let i = 1; i <= 50; i++) {
+        const numFormatted = String(i).padStart(2, '0');
 
-    card.innerHTML = `
-    <div class="number-badge">${numFormatted}</div>
-    <input 
-        type="text" 
-        class="number-input" 
-        id="input-${i}"
-        data-numero="${i}" 
-        placeholder="Nombre del participante..." 
-    />
-    `;
+        const card = document.createElement('div');
+        card.className = 'number-card';
+        card.id = `card-${i}`;
 
-    gridContainer.appendChild(card);
-}
+        const badge = document.createElement('div');
+        badge.className = 'number-badge';
+        badge.textContent = numFormatted;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'number-input';
+        input.id = `input-${i}`;
+        input.dataset.numero = String(i);
+        input.placeholder = 'Nombre del participante...';
+
+        card.appendChild(badge);
+        card.appendChild(input);
+        fragment.appendChild(card);
+
+        cards[i] = card;
+        inputs[i] = input;
+    }
+
+    gridContainer.appendChild(fragment);
 }
 
 // TIEMPO REAL para nombres
 onValue(nombresRef, (snapshot) => {
-nombresData = snapshot.val() || {};
+    nombresData = snapshot.val() || {};
 
-statusBadge.textContent = "🟢 Conectado en Tiempo Real";
-statusBadge.classList.add("connected");
+    statusBadge.textContent = '🟢 Conectado en Tiempo Real';
+    statusBadge.classList.add('connected');
 
-for (let i = 1; i <= 50; i++) {
-    const input = document.getElementById(`input-${i}`);
-    const card = document.getElementById(`card-${i}`);
-    const val = nombresData[i] || '';
+    for (let i = 1; i <= 50; i++) {
+        const input = inputs[i];
+        const card = cards[i];
+        const val = nombresData[i] || '';
+        const isFilled = val.trim() !== '';
 
-    // Mantenimiento del cursor
-    if (document.activeElement !== input) {
-    input.value = val;
+        if (input && document.activeElement !== input && input.value !== val) {
+            input.value = val;
+        }
+
+        if (card) {
+            card.classList.toggle('filled', isFilled);
+        }
     }
 
-    if (val.trim() !== '') {
-    card.classList.add('filled');
-    } else {
-    card.classList.remove('filled');
-    }
-}
-actualizarContadores();
+    actualizarContadores();
 });
 
 // TIEMPO REAL para Imagen
 onValue(imagenRef, (snapshot) => {
-const imgVal = snapshot.val();
-if (imgVal) {
-    raffleImage.src = imgVal;
-    raffleImage.style.display = 'block';
-    placeholderText.style.display = 'none';
-} else {
-    raffleImage.src = '';
-    raffleImage.style.display = 'none';
-    placeholderText.style.display = 'block';
-}
+    const imgVal = snapshot.val() || '';
+    if (imgVal === lastImageVal) {
+        return;
+    }
+
+    lastImageVal = imgVal;
+    if (imgVal) {
+        raffleImage.src = imgVal;
+        raffleImage.style.display = 'block';
+        placeholderText.style.display = 'none';
+    } else {
+        raffleImage.src = '';
+        raffleImage.style.display = 'none';
+        placeholderText.style.display = 'block';
+    }
 });
 
 // Envío de cambios

@@ -18,46 +18,55 @@ const db = getDatabase(app);
 
 // Cuadrícula
 const grid = document.getElementById('grid-numeros');
+const numberElements = new Array(51);
+const mobileImg = document.getElementById('imagen-mobile');
+let lastBgUrl = '';
+
+const fragment = document.createDocumentFragment();
 for (let i = 1; i <= 50; i++) {
-const divDiv = document.createElement('div');
-divDiv.className = 'numero';
-divDiv.id = `num-${i}`;
-divDiv.textContent = i;
-grid.appendChild(divDiv);
+    const divDiv = document.createElement('div');
+    divDiv.className = 'numero';
+    divDiv.id = `num-${i}`;
+    divDiv.textContent = i;
+
+    fragment.appendChild(divDiv);
+    numberElements[i] = divDiv;
 }
+grid.appendChild(fragment);
 
 // Cambios en tiempo real
 const nombresRef = ref(db, 'sorteo/nombres');
 
 onValue(nombresRef, (snapshot) => {
-const datos = snapshot.val() || {};
+    const datos = snapshot.val() || {};
 
-// Recorrido de tablero
-for (let i = 1; i <= 50; i++) {
-    const elementoNumero = document.getElementById(`num-${i}`);
-    
-    if (datos[i] && datos[i].trim() !== "") {
-    elementoNumero.classList.add('registrado');
-    elementoNumero.title = `Registrado por: ${datos[i]}`; // Monstrar nombre
-    } else {
-    elementoNumero.classList.remove('registrado');
-    elementoNumero.title = "";
+    for (let i = 1; i <= 50; i++) {
+        const elementoNumero = numberElements[i];
+        if (!elementoNumero) {
+            continue;
+        }
+
+        const nombre = datos[i];
+        const registrado = typeof nombre === 'string' && nombre.trim() !== '';
+
+        elementoNumero.classList.toggle('registrado', registrado);
+        elementoNumero.title = registrado ? `Registrado por: ${nombre}` : '';
     }
-}
 });
 
 // Sincronizar imagen
 const imagenRef = ref(db, 'sorteo/imagen');
 onValue(imagenRef, (snapshot) => {
-const imgVal = snapshot.val();
-const bgUrl = imgVal ? `url('${imgVal}')` : "url('plantilla-sorteo.png')";
+    const imgVal = snapshot.val() || '';
+    const bgUrl = imgVal ? `url('${imgVal}')` : "url('plantilla-sorteo.png')";
 
-// Actualizar fondo escritorio
-document.body.style.backgroundImage = bgUrl;
+    if (bgUrl === lastBgUrl) {
+        return;
+    }
 
-// Actualizar contenedor móviles
-const mobileImg = document.getElementById('imagen-mobile');
-if (mobileImg) {
-    mobileImg.style.backgroundImage = bgUrl;
-}
+    lastBgUrl = bgUrl;
+    document.body.style.backgroundImage = bgUrl;
+    if (mobileImg) {
+        mobileImg.style.backgroundImage = bgUrl;
+    }
 });
