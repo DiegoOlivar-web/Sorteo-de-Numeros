@@ -1,5 +1,22 @@
-const STORAGE_KEY_NAMES = 'sorteo_50_nombres';
-const STORAGE_KEY_IMAGE = 'sorteo_50_imagen';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDR-P_S7CAGCEw8WlJzTgHPkDMPIOdZWQk",
+    authDomain: "ilovejuan.firebaseapp.com",
+    databaseURL: "https://ilovejuan-default-rtdb.firebaseio.com",
+    projectId: "ilovejuan",
+    storageBucket: "ilovejuan.firebasestorage.app",
+    messagingSenderId: "57213839627",
+    appId: "1:57213839627:web:429c76d2183f2c924d1a0e",
+    measurementId: "G-97C9T9N0XD"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const nombresRef = ref(db, 'sorteo/nombres');
+const imagenRef = ref(db, 'sorteo/imagen');
 
 const gridContainer = document.getElementById('grid-container');
 const imageUpload = document.getElementById('image-upload');
@@ -10,18 +27,17 @@ const countEmptyEl = document.getElementById('count-empty');
 const btnReset = document.getElementById('btn-reset');
 const btnExport = document.getElementById('btn-export');
 const toast = document.getElementById('toast');
+const statusBadge = document.getElementById('status-badge');
 
-let nombresData = JSON.parse(localStorage.getItem(STORAGE_KEY_NAMES)) || {};
+let nombresData = {};
 
-// Renderizado 50 números
-function renderGrid() {
+function initGrid() {
 gridContainer.innerHTML = '';
 for (let i = 1; i <= 50; i++) {
     const numFormatted = String(i).padStart(2, '0');
-    const valorActual = nombresData[i] || '';
 
     const card = document.createElement('div');
-    card.className = `number-card ${valorActual.trim() !== '' ? 'filled' : ''}`;
+    card.className = 'number-card';
     card.id = `card-${i}`;
 
     card.innerHTML = `
@@ -29,83 +45,93 @@ for (let i = 1; i <= 50; i++) {
     <input 
         type="text" 
         class="number-input" 
+        id="input-${i}"
         data-numero="${i}" 
         placeholder="Nombre del participante..." 
-        value="${escapeHtml(valorActual)}"
     />
     `;
 
     gridContainer.appendChild(card);
 }
+}
+
+// TIEMPO REAL para nombres
+onValue(nombresRef, (snapshot) => {
+nombresData = snapshot.val() || {};
+
+statusBadge.textContent = "🟢 Conectado en Tiempo Real";
+statusBadge.classList.add("connected");
+
+for (let i = 1; i <= 50; i++) {
+    const input = document.getElementById(`input-${i}`);
+    const card = document.getElementById(`card-${i}`);
+    const val = nombresData[i] || '';
+
+    // Mantenimiento del cursor
+    if (document.activeElement !== input) {
+    input.value = val;
+    }
+
+    if (val.trim() !== '') {
+    card.classList.add('filled');
+    } else {
+    card.classList.remove('filled');
+    }
+}
 actualizarContadores();
-}
-
-function escapeHtml(text) {
-return text.replace(/[&<>"']/g, function(m) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
 });
-}
 
-// Guardado de números
+// TIEMPO REAL para Imagen
+onValue(imagenRef, (snapshot) => {
+const imgVal = snapshot.val();
+if (imgVal) {
+    raffleImage.src = imgVal;
+    raffleImage.style.display = 'block';
+    placeholderText.style.display = 'none';
+} else {
+    raffleImage.src = '';
+    raffleImage.style.display = 'none';
+    placeholderText.style.display = 'block';
+}
+});
+
+// Envío de cambios
 gridContainer.addEventListener('input', (e) => {
 if (e.target.classList.contains('number-input')) {
     const numero = e.target.dataset.numero;
     const nombre = e.target.value;
-    const cardElement = document.getElementById(`card-${numero}`);
 
+    const itemRef = ref(db, `sorteo/nombres/${numero}`);
     if (nombre.trim() !== '') {
-    nombresData[numero] = nombre;
-    cardElement.classList.add('filled');
+    set(itemRef, nombre);
     } else {
-    delete nombresData[numero];
-    cardElement.classList.remove('filled');
+    remove(itemRef);
     }
-
-    localStorage.setItem(STORAGE_KEY_NAMES, JSON.stringify(nombresData));
-    actualizarContadores();
-    mostrarToast('Guardado automáticamente');
+    mostrarToast('Sincronizado en tiempo real');
 }
 });
 
-// Guardado de imagen
-function cargarImagenGuardada() {
-const savedImage = localStorage.getItem(STORAGE_KEY_IMAGE);
-if (savedImage) {
-    raffleImage.src = savedImage;
-    raffleImage.style.display = 'block';
-    placeholderText.style.display = 'none';
-}
-}
-
+// Envío de imagen
 imageUpload.addEventListener('change', (e) => {
 const file = e.target.files[0];
 if (file) {
     const reader = new FileReader();
     reader.onload = function(event) {
     const base64Image = event.target.result;
-    raffleImage.src = base64Image;
-    raffleImage.style.display = 'block';
-    placeholderText.style.display = 'none';
-    
-    try {
-        localStorage.setItem(STORAGE_KEY_IMAGE, base64Image);
-        mostrarToast('Imagen guardada');
-    } catch (err) {
-        alert('La imagen es muy pesada para guardarse automáticamente. Se mantendrá visible mientras no cierres la pestaña.');
-    }
+    set(imagenRef, base64Image)
+        .then(() => mostrarToast('Imagen actualizada en todos los dispositivos'))
+        .catch(() => alert('La imagen es demasiado pesada para enviarse en tiempo real. Intenta con una imagen más liviana.'));
     };
     reader.readAsDataURL(file);
 }
 });
 
-// Cont
 function actualizarContadores() {
 const cantidadVendida = Object.keys(nombresData).length;
 countFilledEl.textContent = cantidadVendida;
 countEmptyEl.textContent = 50 - cantidadVendida;
 }
 
-// Notify
 let timeoutToast;
 function mostrarToast(mensaje) {
 toast.textContent = mensaje;
@@ -116,17 +142,11 @@ timeoutToast = setTimeout(() => {
 }, 1200);
 }
 
-// Limpiar lista
+// Limpiar BD
 btnReset.addEventListener('click', () => {
-if (confirm('¿Deseas vaciar la lista de participantes y la imagen?')) {
-    localStorage.removeItem(STORAGE_KEY_NAMES);
-    localStorage.removeItem(STORAGE_KEY_IMAGE);
-    nombresData = {};
-    raffleImage.src = '';
-    raffleImage.style.display = 'none';
-    placeholderText.style.display = 'block';
-    renderGrid();
-    mostrarToast('Lista reiniciada');
+if (confirm('¿Deseas reiniciar el sorteo para TODOS los dispositivos conectados?')) {
+    remove(ref(db, 'sorteo'));
+    mostrarToast('Sorteo reiniciado');
 }
 });
 
@@ -147,8 +167,4 @@ link.download = 'lista_sorteo_50.txt';
 link.click();
 });
 
-// Inicialización
-window.addEventListener('DOMContentLoaded', () => {
-renderGrid();
-cargarImagenGuardada();
-});
+initGrid();

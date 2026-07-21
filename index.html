@@ -3,17 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Plantilla de Sorteo - 50 Números</title>
+    <title>Plantilla de Sorteo - 50 Números (En Tiempo Real)</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="script.js" defer></script>
+    <script type="module" src="script.js" defer></script>
   </head>
   <body>
+
     <header>
-      <h1>SORTEO DEL BAILETON<br>PRO SALUD</h1>
+      <h1>Gestión de Sorteo (50 Números)</h1>
+      <p>Sincronización en tiempo real entre múltiples dispositivos.</p>
+      <div id="status-badge" class="status-badge">Conectando a Firebase...</div>
     </header>
 
     <main class="app-container">
-      <!-- Columna 1: Imagen, contadores y acciones -->
       <div class="sticky-side">
         <section class="card">
           <label for="image-upload" class="image-preview-box" id="preview-container">
@@ -23,10 +25,10 @@
                 <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
               <p><strong>Subir Imagen del Premio</strong></p>
-              <p style="font-size:0.8rem; margin-top:4px;">Toca para cargar afiche</p>
             </div>
           </label>
           <input type="file" id="image-upload" class="file-input" accept=".jpg, .jpeg, .png, .webp, .gif, image/jpeg, image/png, image/webp" />
+
           <div class="stats-box">
             <div>Vendidos: <span id="count-filled">0</span> / 50</div>
             <div>Disponibles: <span id="count-empty">50</span></div>
@@ -42,10 +44,8 @@
           </div>
         </section>
       </div>
-
-      <!-- Columna 2: Cuadrícula de 50 números -->
       <section class="numbers-grid" id="grid-container"></section>
     </main>
-    <div id="toast" class="toast">Guardado en tiempo real</div>
+    <div id="toast" class="toast">Guardando en Firebase...</div>
   </body>
 </html>
