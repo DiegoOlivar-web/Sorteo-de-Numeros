@@ -50,9 +50,14 @@ for (let i = 1; i <= 50; i++) {
 const imagenRef = ref(db, 'sorteo/imagen');
 onValue(imagenRef, (snapshot) => {
 const imgVal = snapshot.val();
-if (imgVal) {
-    document.body.style.backgroundImage = `url('${imgVal}')`;
-} else {
-    document.body.style.backgroundImage = "url('plantilla-sorteo.png')";
+const bgUrl = imgVal ? `url('${imgVal}')` : "url('plantilla-sorteo.png')";
+
+// Actualizar fondo escritorio
+document.body.style.backgroundImage = bgUrl;
+
+// Actualizar contenedor móviles
+const mobileImg = document.getElementById('imagen-mobile');
+if (mobileImg) {
+    mobileImg.style.backgroundImage = bgUrl;
 }
 });
