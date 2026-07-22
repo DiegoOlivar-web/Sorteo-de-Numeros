@@ -20,7 +20,10 @@ const db = getDatabase(app);
 const grid = document.getElementById('grid-numeros');
 const numberElements = new Array(51);
 const mobileImg = document.getElementById('imagen-mobile');
+const toast = document.getElementById('toast-notificacion');
 let lastBgUrl = '';
+let nombresRegistrados = {};
+let toastTimer = null;
 
 const fragment = document.createDocumentFragment();
 for (let i = 1; i <= 50; i++) {
@@ -29,16 +32,45 @@ for (let i = 1; i <= 50; i++) {
     divDiv.id = `num-${i}`;
     divDiv.textContent = i;
 
+    divDiv.addEventListener('click', () => {
+        const nombre = nombresRegistrados[i];
+        const registrado = typeof nombre === 'string' && nombre.trim() !== '';
+        const texto = registrado
+            ? `Número ${i}: ${nombre}`
+            : `Número ${i}: Sin registro`;
+
+        mostrarNotificacion(texto, registrado ? 'registrado' : 'sin-registro');
+    });
+
     fragment.appendChild(divDiv);
     numberElements[i] = divDiv;
 }
 grid.appendChild(fragment);
+
+function mostrarNotificacion(mensaje, tipo = 'sin-registro') {
+    if (!toast) {
+        return;
+    }
+
+    toast.textContent = mensaje;
+    toast.classList.remove('visible', 'registrado', 'sin-registro');
+    toast.classList.add('visible', tipo);
+
+    if (toastTimer) {
+        clearTimeout(toastTimer);
+    }
+
+    toastTimer = setTimeout(() => {
+        toast.classList.remove('visible');
+    }, 5000);
+}
 
 // Cambios en tiempo real
 const nombresRef = ref(db, 'sorteo/nombres');
 
 onValue(nombresRef, (snapshot) => {
     const datos = snapshot.val() || {};
+    nombresRegistrados = datos;
 
     for (let i = 1; i <= 50; i++) {
         const elementoNumero = numberElements[i];

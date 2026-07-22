@@ -109,6 +109,52 @@ body {
     display: none;
 }
 
+.toast-notificacion {
+    position: fixed;
+    top: 20px;
+    right: -360px;
+    z-index: 9999;
+    min-width: 240px;
+    max-width: 320px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(8, 18, 32, 0.95);
+    color: #fff;
+    border: 1px solid rgba(0, 255, 255, 0.35);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    font-weight: 600;
+    line-height: 1.4;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.toast-notificacion.visible {
+    right: 20px;
+    opacity: 1;
+    animation: pushIn 0.35s ease forwards;
+}
+
+.toast-notificacion.registrado {
+    border-color: #00ff00;
+    box-shadow: 0 10px 30px rgba(0, 255, 0, 0.25);
+}
+
+.toast-notificacion.sin-registro {
+    border-color: rgba(0, 255, 255, 0.35);
+}
+
+@keyframes pushIn {
+    from {
+        opacity: 0;
+        transform: translateX(40px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
 @media (max-width: 992px) {
     body {
         background-image: none !important;
